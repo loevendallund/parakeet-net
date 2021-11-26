@@ -134,7 +134,11 @@ if __name__ == "__main__":
         print(f"size of batch sequence is: {len(b)}")
         print()
 
+        slashSplit = args.folder_to_test.split('/')
+        write_output(args.outputDir, slashSplit[0], slashSplit[1], b)
+
         write_debug(args.outputDir, args.folder_to_test, "", b, debugmsg)
+        
 
         exit()
 
