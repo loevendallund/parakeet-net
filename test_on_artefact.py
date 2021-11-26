@@ -122,7 +122,9 @@ if __name__ == "__main__":
         ir = conv_artefact_to_ir(args.folder_to_test)
 
         debugmsg = {}
+        start = time.time()
         rir, b, succ = find_batches(ir, True, debugmsg)
+        end = time.time()
 
         reduce_network(rir)
         if succ == False:
@@ -134,11 +136,21 @@ if __name__ == "__main__":
         print(f"size of batch sequence is: {len(b)}")
         print()
 
+
         slashSplit = args.folder_to_test.split('/')
         write_output(args.outputDir, slashSplit[0], slashSplit[1], b)
 
         write_debug(args.outputDir, args.folder_to_test, "", b, debugmsg)
         
+        f = slashSplit[1].removesuffix("/")
+        stats.append({"network": f.removesuffix(".json"), "elapsedTime": end - start, "batches": b, "numberOfBatch": len(b), 'networkSize': len(ir.nodes)})
+        with open(args.outputDir + "/" + "stats_" + f + ".csv", mode="w") as csvFile:
+            fieldNames = ['network', 'elapsedTime', 'batches', 'numberOfBatch', 'networkSize']
+            w = csv.DictWriter(csvFile, fieldnames=fieldNames)
+
+            w.writeheader()
+            for i in stats:
+                w.writerow(i)
 
         exit()
 
