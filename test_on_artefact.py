@@ -77,7 +77,7 @@ def write_debug(outputDir, inputFolder, fname, b, msg, cycles = []):
                 else:
                     textfile.write(str(e))
             textfile.write("]\n")
-        if tmp['wp'] != {}:
+        if 'wp' in tmp and tmp['wp'] != {}:
             textfile.write("Nodes not reach before waypoint or target:\n")
             for key, val in tmp['wp'].items():
                 textfile.write("  " + str(key) + ": ")
