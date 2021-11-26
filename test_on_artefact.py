@@ -115,13 +115,14 @@ if __name__ == "__main__":
 
     errorFiles = []
     stats = []
-    biggestBatch = 0
+    biggestBatch = ["", 0]
     errorWP = []
     
     if args.onlyOne:
         ir = conv_artefact_to_ir(args.folder_to_test)
 
         debugmsg = {}
+        print("route", ir.rm)
         start = time.time()
         rir, b, succ = find_batches(ir, True, debugmsg)
         end = time.time()
@@ -164,8 +165,8 @@ if __name__ == "__main__":
         if succ:
             write_output(args.outputDir, args.folder_to_test, f, b)
             stats.append({"network": f.removesuffix(".json"), "elapsedTime": end - start, "batches": b, "numberOfBatch": len(b), 'networkSize': len(ir.nodes)})
-            if biggestBatch < len(b):
-                biggestBatch = len(b)
+            if biggestBatch[1] < len(b):
+                biggestBatch = [f, len(b)]
         else:
             #errorFiles.append(f)
             out = [f]

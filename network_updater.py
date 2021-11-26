@@ -1,16 +1,22 @@
-from typing import Dict
+from typing import Dict, List
 from IR import IR
 
 # Update network towards rm, by only updating non_locked nodes
-def update_network(currR: Dict, ir: IR):
+def update_network(currR: Dict, ir: IR, chain: Dict, current_batch: List):
     #List of the nodes that is added to this update batch
     upd_nodes = []
+    for i in current_batch:
+        upd_nodes.append(i.id)
+    next_batch = []
     
     #Iterate over all nodes in network to check if it should be updated, still needs further clamping, to make sure that only valid nodes are removed
     for node in ir.rm:
         #node = ir.nodes[i]
         #Check if the node exist in rm and isn't locked
         if node.lockNode != True and node in ir.rm:
+            if node in chain:
+                for i in chain[node]:
+                    next_batch.append(i)
             #Update the valid node and add it to the batch
             currR[node] = ir.rm[node]
             upd_nodes.append(node.id)
@@ -19,4 +25,4 @@ def update_network(currR: Dict, ir: IR):
             node.lockNode = False
 
     #Return the updated batch, and if there is no updates it will just return an empty batch
-    return upd_nodes
+    return upd_nodes, next_batch

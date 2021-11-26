@@ -68,16 +68,25 @@ def similarity_reduction(ir: IR, node: Node):
 
 def chain_reduction_r(ir: IR):
     remNodes = []
+    chainNodes = {}
     for node in ir.r:
         if node not in ir.rm:
             for i in ir.rev_r[node]:
                 ir.r[i] = ir.r[node]
+                if i in ir.rm:
+                    if i not in chainNodes:
+                        chainNodes[i] = [node]
+                    else:
+                        chainNodes[i].append(node)
             for i in ir.rev_r[ir.r[node]]:
                 ir.rev_r[ir.r[i]] = ir.rev_r[node]
             remNodes.append(node)
 
     for n in remNodes:
         del ir.r[n]
+
+    return chainNodes
+    #print("chainNodes:", chainNodes)
 
 #This will maybe be implemented, but is outcommented, since i don't like to look at those errors...
 #def chain_reduction(node1, node2, node3, node4):

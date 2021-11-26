@@ -7,6 +7,8 @@ from network_updater import update_network
 
 def find_batches(ir: IR, debug = False, msg = {}):
     batches = []
+    next_batch_holder = []
+    chain = {}
     rir = copy.deepcopy(ir)
     first = True
     if debug:
@@ -19,7 +21,7 @@ def find_batches(ir: IR, debug = False, msg = {}):
         reduce_network(rir)
 
         if first:
-            chain_reduction_r(rir)
+            chain = chain_reduction_r(rir)
             first = False
         
         if debug:
@@ -36,7 +38,7 @@ def find_batches(ir: IR, debug = False, msg = {}):
                 return rir, batches, False
 
         #update
-        b = update_network(rir.r, rir)
+        b, next_batch_holder = update_network(rir.r, rir, chain, next_batch_holder)
 
         #Check if the batch is empty, if it is return the batches and the updated version of ir(debuggin purpose)
         if b == []:
