@@ -68,6 +68,8 @@ def determine_locked(ir: IR, debug = False, debugMsg = {}):
         for i in potentials:
             locked.append(potentials[i])
 
+        if 'wp' not in debugMsg:
+            debugMsg['wp'] = {}
         debugMsg['wp'][ir.target.id] = locked
 
     #First check if theres even something in rm

@@ -67,7 +67,7 @@ def write_debug(outputDir, inputFolder, fname, b, msg, cycles = []):
             textfile.write("]\n")
         
         tmp = msg[i]
-        if tmp['loop'] != {}:
+        if 'loop' in tmp and tmp['loop'] != {}:
             loop = tmp['loop']
             textfile.write("Loop lock:\n    [")
             for j in range(len(loop)):
