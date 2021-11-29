@@ -18,7 +18,11 @@ def update_network(currR: Dict, ir: IR, chain: Dict, current_batch: List):
                 for i in chain[node]:
                     next_batch.append(i)
             #Update the valid node and add it to the batch
+            if node in ir.r and ir.r[node] in ir.rev_r:
+                ir.rev_r[ir.r[node]].remove(node)
+            
             currR[node] = ir.rm[node]
+
             upd_nodes.append(node.id)
         else:
             #Make sure the node is unlocked, so that we can check it again later

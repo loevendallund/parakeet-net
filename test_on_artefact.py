@@ -7,7 +7,7 @@ import argparse
 import json
 from IR import IR
 from batch_handler import find_batches
-from network_reducer import reduce_network
+from network_reducer import reduce_network, chain_reduction_r
 
 def conv_artefact_to_ir(jsonLoc):
     file = open(jsonLoc, "r")
@@ -57,6 +57,7 @@ def write_debug(outputDir, inputFolder, fname, b, msg, cycles = []):
     for i in msg:
         textfile.write("Batch " + str(i + 1) + ":\n")
         if i < len(b):
+            b[i].sort()
             textfile.write("    [")
             for j in range(len(b[i])):
                 e = b[i][j]
@@ -122,7 +123,6 @@ if __name__ == "__main__":
         ir = conv_artefact_to_ir(args.folder_to_test)
 
         debugmsg = {}
-        print("route", ir.rm)
         start = time.time()
         rir, b, succ = find_batches(ir, True, debugmsg)
         end = time.time()
@@ -152,6 +152,8 @@ if __name__ == "__main__":
             w.writeheader()
             for i in stats:
                 w.writerow(i)
+
+        #ir.draw_network()
 
         exit()
 

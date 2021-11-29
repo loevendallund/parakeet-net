@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Dict, Tuple, Set
 import networkx as nx
+import matplotlib.pyplot as plt
 import json
 
 from node import Route, Node
@@ -87,7 +88,6 @@ class IR:
             for i in way.get("waypoint"):
                 waypoints.append(i)
 
-
         def dict_to_nodes(dict):
             for n1, n2 in dict:
                 node1 = Node(n1, n1 in waypoints)
@@ -141,6 +141,27 @@ class IR:
             "r": map_node_route(self.r),
             "rm": map_node_route(self.rm),
         }
+
+    def draw_network(self):
+        G = nx.DiGraph()
+
+        for node in self.nodes:
+            G.add_node(node)
+
+        for node in self.r:
+            G.add_edge(node.id, self.r[node].id, color="b")
+
+        for node in self.rm:
+            G.add_edge(node.id, self.rm[node].id, color="r")
+
+        print(f"source: {self.source.id}, target: {self.target.id}, waypoints {self.wp}")
+
+        edges = G.edges()
+        color = [G[u][v]['color'] for u,v in edges]
+
+        nx.draw(G, with_labels = True, edge_color=color)
+        plt.draw()
+        plt.show()
 
 
 def next_node(self, list, current_node):
