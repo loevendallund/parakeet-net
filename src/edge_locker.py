@@ -1,5 +1,5 @@
-from .IR import IR
-from .IR import simple as testnet
+from .network.IR import IR
+from .network.IR import simple as testnet
 
 def determine_locked(ir: IR, debug = False, debugMsg = {}):
     # Lets set up some state

@@ -1,5 +1,5 @@
 from typing import Dict, List
-from .IR import IR
+from .network.IR import IR
 
 # Update network towards rm, by only updating non_locked nodes
 def update_network(currR: Dict, ir: IR, chain: Dict, current_batch: List):

@@ -1,6 +1,6 @@
 import copy
-from .IR import IR
-from .IR import testnet_test as testnet
+from .network.IR import IR
+from .network.IR import testnet_test as testnet
 from .edge_locker import determine_locked
 from .network_reducer import reduce_network, chain_reduction_r
 from .network_updater import update_network

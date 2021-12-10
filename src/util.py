@@ -2,7 +2,7 @@
 import os
 import json
 import csv
-from .IR import IR
+from src.network.IR import IR
 from typing import Dict, List
 
 def convert_node_path_to_IR(filePath: str):

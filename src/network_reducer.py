@@ -1,6 +1,6 @@
-from .IR import IR
-from .IR import testnet_reduct1 as testnet
-from .node import Node
+from .network.IR import IR
+from .network.IR import testnet_reduct1 as testnet
+from .network.node import Node
 
 #Takes Ir as an input at applies reduction on it by going through all nodes in rm
 def reduce_network(ir: IR):

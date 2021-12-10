@@ -8,7 +8,7 @@ import time
 from Compare.Verify.run_test import run
 from src.main import runSingle
 from src import util
-from src.IR import IR
+from src.network.IR import IR
 
 def conv_string_to_list(stringList):
     if stringList[0] == "[":

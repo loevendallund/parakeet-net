@@ -2,7 +2,7 @@ import os
 import time
 from tqdm import tqdm
 
-from .IR import IR
+from .network.IR import IR
 from . import util
 from .batch_handler import find_batches as batchCalc
 
