@@ -1,0 +1,36 @@
+{
+    "initial_routing": [
+        [
+            1,
+            2
+        ],
+        [
+            2,
+            3
+        ],
+        [
+            4,
+            3
+        ]
+    ],
+    "final_routing": [
+        [
+            1,
+            4
+        ]
+    ],
+    "properties": {
+        "waypoint": {
+            "startnode": 1,
+            "finalnode": 6,
+            "waypoint": 3
+        },
+        "loopfreedom": {
+            "startnode": 1
+        },
+        "reachability": {
+            "startnode": 1,
+            "finalnode": 3
+        }
+    }
+}

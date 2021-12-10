@@ -35,7 +35,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     ir = conv_to_ir(args.metadata_location)
 
-    rir, b = find_batches(ir)
+    rir, b, succ = find_batches(ir)
 
     print(f"Update batch sequence is: {b}")
     print(f"size of batch sequence is: {len(b)}")

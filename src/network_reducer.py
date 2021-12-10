@@ -1,6 +1,6 @@
-from IR import IR
-from IR import testnet_reduct1 as testnet
-from node import Node
+from .IR import IR
+from .IR import testnet_reduct1 as testnet
+from .node import Node
 
 #Takes Ir as an input at applies reduction on it by going through all nodes in rm
 def reduce_network(ir: IR):
@@ -31,7 +31,7 @@ def similarity_reduction(ir: IR, node: Node):
         #Make a ref to the next node, we only need one since the next node is the same in the routing tables r and rm
         nnode = ir.r[node]
         #Check if the current has a previous node in routing r and update where it points to
-        if node in ir.rev_r:
+        if node in ir.rev_r and nnode in ir.rev_r:
             if node in ir.rev_r[nnode]:
                 idx = ir.rev_r[nnode].index(node)
                 del ir.rev_r[nnode][idx]
@@ -69,23 +69,27 @@ def similarity_reduction(ir: IR, node: Node):
 def chain_reduction_r(ir: IR):
     remNodes = []
     chainNodes = {}
+    chainNodesId = []
     for node in ir.r:
         if node not in ir.rm:
-            for i in ir.rev_r[node]:
-                ir.r[i] = ir.r[node]
-                if i in ir.rm:
-                    if i not in chainNodes:
-                        chainNodes[i] = [node]
-                    else:
-                        chainNodes[i].append(node)
-            for i in ir.rev_r[ir.r[node]]:
-                ir.rev_r[ir.r[i]] = ir.rev_r[node]
+            if node in ir.rev_r:
+                for i in ir.rev_r[node]:
+                    ir.r[i] = ir.r[node]
+                    if i in ir.rm:
+                        if i not in chainNodes:
+                            chainNodes[i] = [node]
+                            chainNodesId.append(node.id)
+                        else:
+                            chainNodes[i].append(node)
+                            chainNodesId.append(node.id)
+                for i in ir.rev_r[ir.r[node]]:
+                    ir.rev_r[ir.r[i]] = ir.rev_r[node]
             remNodes.append(node)
 
     for n in remNodes:
         del ir.r[n]
 
-    return chainNodes
+    return chainNodes, chainNodesId
     #print("chainNodes:", chainNodes)
 
 #This will maybe be implemented, but is outcommented, since i don't like to look at those errors...

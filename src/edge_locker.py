@@ -1,5 +1,5 @@
-from IR import IR
-from IR import testnet_arrow as testnet
+from .IR import IR
+from .IR import simple as testnet
 
 def determine_locked(ir: IR, debug = False, debugMsg = {}):
     # Lets set up some state
@@ -62,6 +62,9 @@ def determine_locked(ir: IR, debug = False, debugMsg = {}):
 
 
     for i in potentials:
+        #if i in tree and tree[i]["reach"] == True and "path" in tree[i] and i not in seen:
+        #    print("fish", i, potentials[i], tree[i]["path"], ir.target.id)
+        #    continue
         ir.nodes[potentials[i]].lockNode = True
     if debug:
         locked = []

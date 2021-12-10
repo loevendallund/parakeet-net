@@ -4,7 +4,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import json
 
-from node import Route, Node
+from .node import Route, Node
 
 
 def nodelist_do_dict(nodes):
@@ -109,7 +109,7 @@ class IR:
                 if nodes[n2] not in res:
                     res[nodes[n2]] = [nodes[n1]]
                 else:
-                    res[nodes[n2]].append(n1)
+                    res[nodes[n2]].append(nodes[n1])
             return res
 
         dict_to_nodes(r)
@@ -155,6 +155,8 @@ class IR:
             G.add_edge(node.id, self.rm[node].id, color="r")
 
         print(f"source: {self.source.id}, target: {self.target.id}, waypoints {self.wp}")
+        print("route r", self.r)
+        print("route rm", self.rm)
 
         edges = G.edges()
         color = [G[u][v]['color'] for u,v in edges]
@@ -210,3 +212,10 @@ def testnet_test() -> IR:
         [1, 7, 4, 3, 2, 5, 6],
         set([7]),
     )
+
+def simple() -> IR:
+    file = open("strayPath.json", "r")
+    data = json.load(file)
+    file.close()
+
+    return IR.from_dict_routes(data.get("Initial_routing"), data.get("Final_routing"), data.get("Properties"))

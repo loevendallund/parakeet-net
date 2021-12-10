@@ -7,7 +7,9 @@ import argparse
 import json
 from IR import IR
 from batch_handler import find_batches
+from edge_locker import determine_locked
 from network_reducer import reduce_network, chain_reduction_r
+from network_updater import update_network
 
 def conv_artefact_to_ir(jsonLoc):
     file = open(jsonLoc, "r")
@@ -106,6 +108,25 @@ def write_debug(outputDir, inputFolder, fname, b, msg, cycles = []):
     textfile.close()
     print(f"written debug file to: {dir}")
 
+def runSingle(filePath, OutputData = False):
+    ir = conv_artefact_to_ir(filePath)
+    debugmsg = {}
+    start = time.time()
+    rir, b, succ, Ids = find_batches(ir, True, debugmsg)
+    end = time.time()
+
+    reduce_network(rir)
+    if OutputData:
+        if succ == False:
+            print("Network Failed")
+            print(f"length of r: {len(rir.r)}, and length of rm: {len(rir.rm)}")
+            print(rir.r)
+            print(rir.rm)
+        print(f"Update batch sequence is: {b}")
+        print(f"size of batch sequence is: {len(b)}")
+
+    return b, debugmsg, ir, rir, end - start, succ, Ids
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("folder_to_test", help="Needs folder location for networks to test")
@@ -120,22 +141,24 @@ if __name__ == "__main__":
     errorWP = []
     
     if args.onlyOne:
-        ir = conv_artefact_to_ir(args.folder_to_test)
+        #ir = conv_artefact_to_ir(args.folder_to_test)
 
-        debugmsg = {}
-        start = time.time()
-        rir, b, succ = find_batches(ir, True, debugmsg)
-        end = time.time()
+        #debugmsg = {}
+        #start = time.time()
+        #rir, b, succ = find_batches(ir, True, debugmsg)
+        #end = time.time()
 
-        reduce_network(rir)
-        if succ == False:
-            print("Network Failed")
-            print(f"length of r: {len(rir.r)}, and length of rm: {len(rir.rm)}")
-            print(rir.r)
-            print(rir.rm)
-        print(f"Update batch sequence is: {b}")
-        print(f"size of batch sequence is: {len(b)}")
-        print()
+        #reduce_network(rir)
+        #if succ == False:
+        #    print("Network Failed")
+        #    print(f"length of r: {len(rir.r)}, and length of rm: {len(rir.rm)}")
+        #    print(rir.r)
+        #    print(rir.rm)
+        #print(f"Update batch sequence is: {b}")
+        #print(f"size of batch sequence is: {len(b)}")
+        #print()
+
+        b, debugmsg, ir, rir, time, succ, __ = runSingle(args.folder_to_test, True)
 
 
         slashSplit = args.folder_to_test.split('/')
@@ -144,7 +167,7 @@ if __name__ == "__main__":
         write_debug(args.outputDir, args.folder_to_test, "", b, debugmsg)
         
         f = slashSplit[1].removesuffix("/")
-        stats.append({"network": f.removesuffix(".json"), "elapsedTime": end - start, "batches": b, "numberOfBatch": len(b), 'networkSize': len(ir.nodes)})
+        stats.append({"network": f.removesuffix(".json"), "elapsedTime": time, "batches": b, "numberOfBatch": len(b), 'networkSize': len(ir.nodes)})
         with open(args.outputDir + "/" + "stats_" + f + ".csv", mode="w") as csvFile:
             fieldNames = ['network', 'elapsedTime', 'batches', 'numberOfBatch', 'networkSize']
             w = csv.DictWriter(csvFile, fieldnames=fieldNames)
@@ -153,7 +176,12 @@ if __name__ == "__main__":
             for i in stats:
                 w.writerow(i)
 
-        #ir.draw_network()
+        reduce_network(ir)
+        chain_reduction_r(ir)
+        determine_locked(ir, False, {}, {})
+        __, __ = update_network(ir.r, ir, {}, [])
+        reduce_network(ir)
+        ir.draw_network()
 
         exit()
 
@@ -161,7 +189,7 @@ if __name__ == "__main__":
         ir = conv_artefact_to_ir(args.folder_to_test + "/" + f)
         
         start = time.time()
-        rir, b, succ = find_batches(ir)
+        rir, b, succ, __ = find_batches(ir)
         end = time.time()
 
         if succ:
