@@ -37,6 +37,8 @@ def run_parakeet_on_edge_route(path: str, outDir: str, statName: str, debug: boo
         if path.endswith(".json"):
             ir = util.convert_edge_path_to_IR(path)
             batches, rir, t, succ, __ = runSingle(ir, debug)
+            print(f"Is network solvable? {succ}")
+            print(batches, "Time taken: ", t)
     elif os.path.isdir(path):
         if not path.endswith("/"):
             path = path + "/"

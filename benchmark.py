@@ -102,6 +102,15 @@ def printCSV(data: Dict):
         for key in data:
             w.writerow(data[key])
 
+def printCSTime(data: Dict, dir: str):
+    with open("Compare/stats_" + dir.split("/")[0] + ".csv", mode="w") as csvFile:
+        fieldNames = ['network', 'oursTime', 'flipTime', 'artefactTime', 'numNodes']
+        w = csv.DictWriter(csvFile, fieldnames=fieldNames)
+
+        w.writeheader()
+        for key in data:
+            w.writerow(data[key])
+
 def add_data_to_dict(data: Dict, ir: IR, network: str, match: bool, blen: List, ot: float, osolv: bool, vblen: List, vt: float, vsolv: bool, fblen: List, ft: float, fsolv: bool):
     if data == {}:
         data = {network : {"network": network, 
@@ -147,9 +156,8 @@ def runVerify(netPath, nodeIds):
 
     return batches, reducedBatches, batchLen, end - start
 
-def readFlip(filename: str, ir: IR, nodeIds: List):
-    #l.append(int(re.findall('\<(.*?)\>', i.__str__())[0]))
-    filePath = "Compare/flip_res/Zoo_json/" + filename
+def readFlip(filename: str, dir: str, ir: IR, nodeIds: List):
+    filePath = "Compare/flip_res/" + dir + filename
     if os.path.isfile(filePath):
         batches = []
         batch = []
@@ -190,7 +198,22 @@ def readFlip(filename: str, ir: IR, nodeIds: List):
 
         return batches, reducedBatches, batchLen, time
     else:
-        return None, None, 0, None
+        return None, None, 0, 0
+
+def readArtefact(filename: str, dir: str) -> float:
+    filePath = "Compare/artefact_res/" + dir + filename + ".verifypn.269"
+    if os.path.isfile(filePath):
+        time = None
+        with open(filePath) as file:
+            lines = file.readlines()
+            for l in lines:
+                res = re.findall('Time \(seconds\)', l)
+                if res != []:
+                    time = re.findall(': (.*?)\n', l)
+                    return float(time[0])
+        return 0
+    else:
+        return 0
 
 def runFlip(netPath: str, ir: IR, nodeIds: List):
     init = nx.DiGraph()
@@ -259,9 +282,11 @@ def SubPaths(flipGraph: flip.Graph, ir: IR):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("Path", help="Path to the network file (json file) or folder containing the dataset")
+    parser.add_argument("Path", help="Path to the network file (json file) or to the folder dataset")
     parser.add_argument("--Flip", "-f", default=False)
     args = parser.parse_args()
+
+    datasets = ["zoo_json/", "nested_json/", "synthethic_json/"]
 
     succ = {}
     fail = {}
@@ -271,36 +296,51 @@ if __name__ == "__main__":
     if os.path.isfile(args.Path):
         if args.Path.endswith(".json"):
             net = args.Path
-            bO, rBO, tO, bOLen, ir, ids = runOurs(net)
-            bV, rBV, bVLen, tV = runVerify(net, ids)
+            #bO, rBO, tO, bOLen, ir, ids = runOurs(net)
+            #bV, rBV, bVLen, tV = runVerify(net, ids)
             #bF, rBF, bFLen, tF = runFlip(net, ir, ids)
 
             file = args.Path.split("/")
             file = os.path.splitext(file[len(file) - 1])[0]
-            bF, rBF, bFLen, tF = readFlip(file, ir, ids)
+            #bF, rBF, bFLen, tF = readFlip(file, ir, ids)
+            readArtefact(file)
 
-            printDebug(ir, net, bO, rBO, bV, rBV, bF, rBF, tO, tV, tF)
+            #printDebug(ir, net, bO, rBO, bV, rBV, bF, rBF, tO, tV, tF)
         else:
             raise Exception("The input either doesn't exist or is not the correct file format (json)")
     else:
         folder = args.Path
-        data = {}
-        numFiles = len([name for name in os.listdir(folder) if os.path.isfile(os.path.join(folder, name))])
-        pbar = tqdm(os.listdir(folder))
-        flipMaxTime = 0
-        for f in pbar:
-            pbar.set_postfix({"succ:": f"{numSucc}/{numFiles}", "fail": f"{numFail}/{numFiles}"})
-            filePath = folder + f
-            bO, rBO, bOLen, tO, ir, ids = runOurs(filePath)
-            bV, rBV, bVLen, tV = runVerify(filePath, ids)
-            #bF, rBF, bFLen, tF = runFlip(filePath, ir, ids)
-            file = os.path.splitext(f)[0]
-            bF, rBF, bFLen, tF = readFlip(file, ir, ids)
-            if tF != None and float(tF) > flipMaxTime:
-                flipMaxTime == tF
+        for i in datasets:
+            if os.path.isdir(args.Path + i):
+                data = {}
+                numFiles = len([name for name in os.listdir(folder + i) if os.path.isfile(os.path.join(folder, name))])
+                pbar = tqdm(os.listdir(folder + i))
+                flipMaxTime = 0
+                for f in pbar:
+                    pbar.set_postfix({"succ:": f"{numSucc}/{numFiles}", "fail": f"{numFail}/{numFiles}"})
+                    filePath = folder + i + f
+                    bO, rBO, bOLen, tO, ir, ids = runOurs(filePath)
+                    #bV, rBV, bVLen, tV = runVerify(filePath, ids)
+                    #bF, rBF, bFLen, tF = runFlip(filePath, ir, ids)
+                    file = os.path.splitext(f)[0]
+                    bF, rBF, bFLen, tF = readFlip(file, i, ir, ids)
+                    tA = readArtefact(file, i)
 
-            data = add_data_to_dict(data, ir, f, True, bOLen, tO, bO != None, bVLen, tV, bV != None, bFLen, tF, bF != None)
+                    if tO == 0 or tF == 0 or tA == 0:
+                        continue
 
-        print(flipMaxTime)
+                    if data == {}:
+                        data = {"network": {'network': file, 'oursTime': tO, 'flipTime': tF, 'artefactTime': tA, 'numNodes': len(ir.nodes)}}
+                    else:
+                        data[file] = {'network': file, 'oursTime': tO, 'flipTime': tF, 'artefactTime': tA, 'numNodes': len(ir.nodes)}
 
-        printCSV(data)
+                printCSTime(data, i)
+                    #bF, rBF, bFLen, tF = readFlip(file, ir, ids)
+                    #if tF != None and float(tF) > flipMaxTime:
+                    #    flipMaxTime == tF
+
+                    #data = add_data_to_dict(data, ir, f, True, bOLen, tO, bO != None, bVLen, tV, bV != None, bFLen, tF, bF != None)
+
+                #print(flipMaxTime)
+
+                #printCSV(data)
