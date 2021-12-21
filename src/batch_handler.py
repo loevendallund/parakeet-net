@@ -15,56 +15,28 @@ def find_batches(ir: IR, debug = False, msg = {}, newHandler = False):
     i = 0
     updSet = set()
 
-    if newHandler:
-        while True:
-            if debug:
-                #lock, and get debug messages from edge locker
-                debugmsg = {}
-                if not determine_locked_new(rir, debug, debugmsg):
-                    msg[i] = debugmsg
-                    return rir, batches, False, redNodesId
-                msg[i] = debugmsg
-                i = i + 1
-            else:
-                #lock
-                if not determine_locked_new(rir, debug):
-                    return rir, batches, False, redNodesId
-
-            #update
-            b = update_network_new(rir.r, rir)
-
-            #Check if the batch is empty, if it is return the batches and the updated version of ir(debuggin purpose)
-            if b == []:
-                succ = check_network_state(rir)
-                #print("Found state of network", succ)
-                return rir, batches, succ, redNodesId
-
-            #Append the batch to the list of batches
-            batches.append(b)
-
     while True:
-        #reduce
-        reduce_network(rir)
-
         if debug:
             #lock, and get debug messages from edge locker
             debugmsg = {}
-            if not determine_locked(rir, debug, debugmsg):
+            if not determine_locked_new(rir, debug, debugmsg):
                 msg[i] = debugmsg
                 return rir, batches, False, redNodesId
             msg[i] = debugmsg
             i = i + 1
         else:
             #lock
-            if not determine_locked(rir, debug):
+            if not determine_locked_new(rir, debug):
                 return rir, batches, False, redNodesId
 
         #update
-        b = update_network(rir.r, rir)
+        b = update_network_new(rir.r, rir)
 
         #Check if the batch is empty, if it is return the batches and the updated version of ir(debuggin purpose)
         if b == []:
-            return rir, batches, True, redNodesId
+            succ = check_network_state(rir)
+            #print("Found state of network", succ)
+            return rir, batches, succ, redNodesId
 
         #Append the batch to the list of batches
         batches.append(b)

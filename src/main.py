@@ -71,25 +71,25 @@ def run_parakeet_on_edge_route(path: str, outDir: str, statName: str, debug: boo
 
 def runSingle(ir: IR, OutputInfo: bool = False, msg = {}) -> Tuple[Union[List, None], IR, float, bool, List]:
     start = time.time()
-    rir, b, succ, Ids = batchCalc(ir, True, msg)
+    rir, b, succ, Ids = batchCalc(ir, True, msg, True)
     end = time.time()
     t = end - start
 
-    start2 = time.time()
-    rir2, b2, succ2, Ids2 = batchCalc(ir, True, msg, True)
-    end2 = time.time()
-    t2 = end2 - start2
+    #start2 = time.time()
+    #rir2, b2, succ2, Ids2 = batchCalc(ir, True, msg, True)
+    #end2 = time.time()
+    #t2 = end2 - start2
 
     #print("\nBatches")
     #print(b)
     #print(b2)
     #print(t, t2)
-    if b != None and b2 != None:
-        if b != b2 and succ != succ2:
-            print("Something wrong", succ, succ2)
-            print(b)
-            print(b2)
-            return b, rir, -1, False, Ids
+    #if b != None and b2 != None:
+    #    if b != b2 and succ != succ2:
+    #        print("Something wrong", succ, succ2)
+    #        print(b)
+    #        print(b2)
+    #        return b, rir, -1, False, Ids
     
 
     if OutputInfo:
