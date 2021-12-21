@@ -35,7 +35,9 @@ def find_batches(ir: IR, debug = False, msg = {}, newHandler = False):
 
             #Check if the batch is empty, if it is return the batches and the updated version of ir(debuggin purpose)
             if b == []:
-                return rir, batches, True, redNodesId
+                succ = check_network_state(rir)
+                #print("Found state of network", succ)
+                return rir, batches, succ, redNodesId
 
             #Append the batch to the list of batches
             batches.append(b)
@@ -66,3 +68,14 @@ def find_batches(ir: IR, debug = False, msg = {}, newHandler = False):
 
         #Append the batch to the list of batches
         batches.append(b)
+
+def check_network_state(ir):
+    for n in ir.nodes:
+        node = ir.nodes[n]
+        if node not in ir.r and node not in ir.rm:
+            continue
+        if node in ir.r and node in ir.rm and ir.r[node] == ir.rm[node]:
+            continue
+        return False
+    return True
+

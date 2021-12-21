@@ -57,6 +57,8 @@ def run_parakeet_on_edge_route(path: str, outDir: str, statName: str, debug: boo
                     stats.append({"network": f.removesuffix(".json"), "elapsedTime": t, "batches": b, "numberOfBatch": len(b), 'networkSize': len(ir.nodes)})
                 else:
                     fNet.append(f.removesuffix(".json"))
+                if t == -1:
+                    print(f)
 
         if stats != []:
             print(f"Failed networks are: {fNet}")
@@ -83,8 +85,11 @@ def runSingle(ir: IR, OutputInfo: bool = False, msg = {}) -> Tuple[Union[List, N
     #print(b2)
     #print(t, t2)
     if b != None and b2 != None:
-        if b != b2:
-            print("Something wrong")
+        if b != b2 and succ != succ2:
+            print("Something wrong", succ, succ2)
+            print(b)
+            print(b2)
+            return b, rir, -1, False, Ids
     
 
     if OutputInfo:

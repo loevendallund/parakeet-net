@@ -74,7 +74,6 @@ def determine_locked_new(ir: IR, debug = False, debugMsg = {}) -> bool:
     # Maps nodes with the one pointing at them.
     # Used to keep track of edges we can potentially add.
     potentials = {}
-    print()
     while current in ir.r or current == ir.target:
         fnext = ir.rm.get(current, None)
 
