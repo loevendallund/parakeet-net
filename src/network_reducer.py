@@ -14,15 +14,11 @@ def reduce_network(ir: IR):
    
     #Removing nodes, this is done since we can't remove nodes from rm, while we iterate over it (we could maybe also copy the nodes)
     for node in remNodes:
-        #if node in ir.rev_rm:
-        #    for i in ir.rev_rm[node]:
-        #        if i in ir.rm:
-        #            ir.rm[i] = ir.r[node]
         del ir.r[node]
         del ir.rm[node]
 
 
-def similarity_reduction(ir: IR, node: Node):
+def similarity_reduction(ir: IR, node: Node) -> bool:
     #First, we want to return if node is target or it doesn't exist in the current route r
     if node == ir.target or node not in ir.r:
         return False
@@ -64,42 +60,3 @@ def similarity_reduction(ir: IR, node: Node):
         return True
     #return false if the current node should not be removed
     return False
-        
-
-def chain_reduction_r(ir: IR):
-    remNodes = []
-    chainNodes = {}
-    chainNodesId = []
-    for node in ir.r:
-        if node not in ir.rm:
-            if node in ir.rev_r:
-                for i in ir.rev_r[node]:
-                    ir.r[i] = ir.r[node]
-                    if i in ir.rm:
-                        if i not in chainNodes:
-                            chainNodes[i] = [node]
-                            chainNodesId.append(node.id)
-                        else:
-                            chainNodes[i].append(node)
-                            chainNodesId.append(node.id)
-                for i in ir.rev_r[ir.r[node]]:
-                    ir.rev_r[ir.r[i]] = ir.rev_r[node]
-            remNodes.append(node)
-
-    for n in remNodes:
-        del ir.r[n]
-
-    return chainNodes, chainNodesId
-    #print("chainNodes:", chainNodes)
-
-#This will maybe be implemented, but is outcommented, since i don't like to look at those errors...
-#def chain_reduction(node1, node2, node3, node4):
-#    node_collection = node1
-#    return nodeCollection
-
-if __name__ == "__main__":
-    ir = testnet()
-    print(ir.to_serial())
-    print("ir nodes: ", ir.nodes)
-
-    print("ir r: ", ir.r)

@@ -111,6 +111,15 @@ def printCSTime(data: Dict, dir: str):
         for key in data:
             w.writerow(data[key])
 
+def printCSVBatch(data: Dict, dir: str):
+    with open("Compare/stats_batchSize_" + dir.split("/")[0] + ".csv", mode="w") as csvFile:
+        fieldNames = ['network', 'ourLen', 'flipLen']
+        w = csv.DictWriter(csvFile, fieldnames=fieldNames)
+
+        w.writeheader()
+        for key in data:
+            w.writerow(data[key])
+
 def add_data_to_dict(data: Dict, ir: IR, network: str, match: bool, blen: List, ot: float, osolv: bool, vblen: List, vt: float, vsolv: bool, fblen: List, ft: float, fsolv: bool):
     if data == {}:
         data = {network : {"network": network, 
@@ -140,7 +149,7 @@ def runOurs(netPath: str):
     else:
         batches = None
 
-    return batches, reducedBatches, batchLen, t, ir, Ids
+    return batches, reducedBatches, batchLen, t, ir, Ids, succ
     
 def runVerify(netPath, nodeIds):
     start = time.time()
@@ -292,6 +301,7 @@ if __name__ == "__main__":
     fail = {}
     numSucc = 0
     numFail = 0
+    maxLen = 0
 
     if os.path.isfile(args.Path):
         if args.Path.endswith(".json"):
@@ -313,34 +323,80 @@ if __name__ == "__main__":
         for i in datasets:
             if os.path.isdir(args.Path + i):
                 data = {}
+                batchS = {}
+                fNet = []
+                ours = 0
+                ours2 = 0
+                flip = 0
+                flip2 = 0
+                petri = 0
+                petri2 = 0
                 numFiles = len([name for name in os.listdir(folder + i) if os.path.isfile(os.path.join(folder, name))])
                 pbar = tqdm(os.listdir(folder + i))
                 flipMaxTime = 0
                 for f in pbar:
                     pbar.set_postfix({"succ:": f"{numSucc}/{numFiles}", "fail": f"{numFail}/{numFiles}"})
                     filePath = folder + i + f
-                    bO, rBO, bOLen, tO, ir, ids = runOurs(filePath)
+                    bO, rBO, bOLen, tO, ir, ids, succ = runOurs(filePath)
                     #bV, rBV, bVLen, tV = runVerify(filePath, ids)
                     #bF, rBF, bFLen, tF = runFlip(filePath, ir, ids)
                     file = os.path.splitext(f)[0]
                     bF, rBF, bFLen, tF = readFlip(file, i, ir, ids)
                     tA = readArtefact(file, i)
 
+                    if type(bOLen) == int and bOLen > maxLen:
+                        maxLen = bOLen
+
+                    if batchS == {}:
+                        if bO == None:
+                            batchO = []
+                        else:
+                            batchO = bO
+                        if bF == None:
+                            batchF = []
+                        else:
+                            batchF = bF
+                        batchS = {file: {'network': file, 'ourLen': len(batchO), 'flipLen': len(batchF)}}
+                    else:
+                        if bO == None:
+                            batchO = []
+                        else:
+                            batchO = bO
+                        if bF == None:
+                            batchF = []
+                        else:
+                            batchF = bF
+                        batchS[file] = {'network': file, 'ourLen': len(batchO), 'flipLen': len(batchF)}
+
+                    if succ:
+                        ours = ours + 1
+                    else:
+                        fNet.append(file)
+                        ours2 = ours2 + 1
+                    if tF != 0:
+                        flip = flip + 1
+                    if tF == 0:
+                        flip2 = flip2 + 1
+                    if tA != 0:
+                        petri = petri + 1
+                    if tA == 0:
+                        petri2 = petri2 + 1
+
                     if tO == 0 or tF == 0 or tA == 0:
                         continue
 
                     if data == {}:
-                        data = {"network": {'network': file, 'oursTime': tO, 'flipTime': tF, 'artefactTime': tA, 'numNodes': len(ir.nodes)}}
+                        data = {file: {'network': file, 'oursTime': tO, 'flipTime': tF, 'artefactTime': tA, 'numNodes': len(ir.nodes)}}
                     else:
                         data[file] = {'network': file, 'oursTime': tO, 'flipTime': tF, 'artefactTime': tA, 'numNodes': len(ir.nodes)}
 
+                if fNet != []:
+                    print(f"Failed networks are: {fNet}")
+                    print(f"Number of networks failed are {len(fNet)}")
+
+                print(i)
+                print(maxLen)
+                print(f"Ours: {ours}, {ours2}, Flip: {flip}, {flip2}, Petri: {petri}, {petri2}")
+
                 printCSTime(data, i)
-                    #bF, rBF, bFLen, tF = readFlip(file, ir, ids)
-                    #if tF != None and float(tF) > flipMaxTime:
-                    #    flipMaxTime == tF
-
-                    #data = add_data_to_dict(data, ir, f, True, bOLen, tO, bO != None, bVLen, tV, bV != None, bFLen, tF, bF != None)
-
-                #print(flipMaxTime)
-
-                #printCSV(data)
+                printCSVBatch(batchS, i)

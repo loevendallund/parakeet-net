@@ -1,5 +1,6 @@
 import os
 import time
+from typing import List, Tuple, Union
 from tqdm import tqdm
 
 from .network.IR import IR
@@ -44,6 +45,7 @@ def run_parakeet_on_edge_route(path: str, outDir: str, statName: str, debug: boo
             path = path + "/"
 
         stats = []
+        fNet = []
         pbar = tqdm(os.listdir(path))
         for f in pbar:
             file = path + f
@@ -53,17 +55,37 @@ def run_parakeet_on_edge_route(path: str, outDir: str, statName: str, debug: boo
 
                 if succ:
                     stats.append({"network": f.removesuffix(".json"), "elapsedTime": t, "batches": b, "numberOfBatch": len(b), 'networkSize': len(ir.nodes)})
+                else:
+                    fNet.append(f.removesuffix(".json"))
+
+        if stats != []:
+            print(f"Failed networks are: {fNet}")
+            print(f"Number of failed networks {len(fNet)}")
 
         if stats != []:
             util.write_stats_to_csv(outDir, statName, stats)
 
     return True
 
-def runSingle(ir: IR, OutputInfo: bool = False, msg = {}):
+def runSingle(ir: IR, OutputInfo: bool = False, msg = {}) -> Tuple[Union[List, None], IR, float, bool, List]:
     start = time.time()
     rir, b, succ, Ids = batchCalc(ir, True, msg)
     end = time.time()
     t = end - start
+
+    start2 = time.time()
+    rir2, b2, succ2, Ids2 = batchCalc(ir, True, msg, True)
+    end2 = time.time()
+    t2 = end2 - start2
+
+    #print("\nBatches")
+    #print(b)
+    #print(b2)
+    #print(t, t2)
+    if b != None and b2 != None:
+        if b != b2:
+            print("Something wrong")
+    
 
     if OutputInfo:
         if succ == False:
@@ -75,3 +97,7 @@ def runSingle(ir: IR, OutputInfo: bool = False, msg = {}):
         print(f"size of batch sequence is: {len(b)}")
 
     return b, rir, t, succ, Ids
+
+def sort_nested_list(list):
+    for l in list:
+        l.sort()

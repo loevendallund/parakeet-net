@@ -5,7 +5,7 @@ import argparse
 import copy
 import time
 import json
-from typing import Dict, List
+from typing import Dict, List, Tuple, Union
 from tqdm import tqdm
 import networkx as nx
 
@@ -15,7 +15,7 @@ from src.main import runSingle
 from src import util
 from src.network.IR import IR
 
-def conv_flip_to_list(flipData):
+def conv_flip_to_list(flipData) -> List:
     res = []
     for s in sorted(flipData._poset.keys()):
         l = []
@@ -46,7 +46,7 @@ def sort_nested_list(list):
     for l in list:
         l.sort()
 
-def rem_nodes_from_nlist(list, nodes):
+def rem_nodes_from_nlist(list, nodes) -> List:
     tmp = copy.deepcopy(list)
     for i in range(len(list)):
         for j in range(len(list[i])):
@@ -94,7 +94,6 @@ def printCSV(data: Dict):
         fieldNames = ['network', 
                 'oursTime', 'oursBatchSize', 'oursSolved',
                 'verifyTime', 'verifyBatchSize', 'verifySolved',
-                'flipTime', 'flipBatchSize', 'flipSolved',
                 'numNodes']
         w = csv.DictWriter(csvFile, fieldnames=fieldNames)
 
@@ -102,23 +101,21 @@ def printCSV(data: Dict):
         for key in data:
             w.writerow(data[key])
 
-def add_data_to_dict(data: Dict, ir: IR, network: str, match: bool, blen: List, ot: float, osolv: bool, vblen: List, vt: float, vsolv: bool, fblen: List, ft: float, fsolv: bool):
+def add_data_to_dict(data: Dict, ir: IR, network: str, match: bool, blen: List, ot: float, osolv: bool, vblen: List, vt: float, vsolv: bool):
     if data == {}:
         data = {network : {"network": network, 
             "oursTime" : ot, "oursBatchSize": blen, "oursSolved": osolv,
             "verifyTime": vt, "verifyBatchSize": vblen, "verifySolved": vsolv,
-            "flipTime": ft, "flipBatchSize": fblen, "flipSolved": fsolv,
             "numNodes": len(ir.nodes)}}
     else:
         data[network] = {"network": network, 
             "oursTime" : ot, "oursBatchSize": blen, "oursSolved": osolv,
             "verifyTime": vt, "verifyBatchSize": vblen, "verifySolved": vsolv,
-            "flipTime": ft, "flipBatchSize": fblen, "flipSolved": fsolv,
             "numNodes": len(ir.nodes)}
 
     return data
 
-def runOurs(netPath: str):
+def runOurs(netPath: str) -> Tuple[Union[List, None], Union[List, None], int, float, IR, int, bool]:
     ir = util.convert_edge_path_to_IR(netPath)
     batches, rir, t, succ, Ids = runSingle(ir)
 
@@ -131,9 +128,9 @@ def runOurs(netPath: str):
     else:
         batches = None
 
-    return batches, reducedBatches, batchLen, t, ir, Ids
+    return batches, reducedBatches, batchLen, t, ir, Ids, succ
     
-def runVerify(netPath, nodeIds):
+def runVerify(netPath, nodeIds) -> Tuple[Union[List, None], Union[List, None], int, float]:
     start = time.time()
     batches = runSingleVerify("Compare/Verify/main.jar", "Compare/Verify/verifypn.269", netPath, True)
     end = time.time()
@@ -147,14 +144,15 @@ def runVerify(netPath, nodeIds):
 
     return batches, reducedBatches, batchLen, end - start
 
-def readFlip(filename: str, ir: IR, nodeIds: List):
+
+def readFlip(filename: str, ir: IR, nodeIds: List) -> Tuple[Union[List, None], Union[List, None], int, float]:
     #l.append(int(re.findall('\<(.*?)\>', i.__str__())[0]))
     filePath = "Compare/flip_res/Zoo_json/" + filename
     if os.path.isfile(filePath):
         batches = []
         batch = []
         read = False
-        time = None
+        time = 0
         with open(filePath) as file:
             lines = file.readlines()
             for l in lines:
@@ -190,7 +188,7 @@ def readFlip(filename: str, ir: IR, nodeIds: List):
 
         return batches, reducedBatches, batchLen, time
     else:
-        return None, None, 0, None
+        return None, None, 0, 0
 
 def runFlip(netPath: str, ir: IR, nodeIds: List):
     init = nx.DiGraph()
@@ -280,27 +278,85 @@ if __name__ == "__main__":
             bF, rBF, bFLen, tF = readFlip(file, ir, ids)
 
             printDebug(ir, net, bO, rBO, bV, rBV, bF, rBF, tO, tV, tF)
+            ir.draw_network()
         else:
             raise Exception("The input either doesn't exist or is not the correct file format (json)")
     else:
         folder = args.Path
         data = {}
+
+        notEqual = 0
+
+        net = []
+        sizesOur = []
+        sizesVer = []
+        ourFail = []
+        verFail = []
+
         numFiles = len([name for name in os.listdir(folder) if os.path.isfile(os.path.join(folder, name))])
         pbar = tqdm(os.listdir(folder))
         flipMaxTime = 0
         for f in pbar:
-            pbar.set_postfix({"succ:": f"{numSucc}/{numFiles}", "fail": f"{numFail}/{numFiles}"})
+            pbar.set_postfix({"network:": f"{f}"})
             filePath = folder + f
-            bO, rBO, bOLen, tO, ir, ids = runOurs(filePath)
+            bO, rBO, bOLen, tO, ir, ids, succ = runOurs(filePath)
             bV, rBV, bVLen, tV = runVerify(filePath, ids)
             #bF, rBF, bFLen, tF = runFlip(filePath, ir, ids)
             file = os.path.splitext(f)[0]
-            bF, rBF, bFLen, tF = readFlip(file, ir, ids)
-            if tF != None and float(tF) > flipMaxTime:
-                flipMaxTime == tF
+            #bF, rBF, bFLen, tF = readFlip(file, ir, ids)
+            #if tF != None and float(tF) > flipMaxTime:
+            #    flipMaxTime == tF
+            
+            if bO != None:
+                sort_nested_list(rBO)
+                sort_nested_list(bO)
+            if bV != None:
+                sort_nested_list(rBV)
+                sort_nested_list(bV)
+            else:
+                verFail.append(file)
 
-            data = add_data_to_dict(data, ir, f, True, bOLen, tO, bO != None, bVLen, tV, bV != None, bFLen, tF, bF != None)
+            if not succ:
+                ourFail.append(file)
 
-        print(flipMaxTime)
+
+            if bO != None and bV != None:
+                if len(bO) != len(bV):
+                    notEqual = notEqual + 1
+                    net.append(file)
+                    sizesOur.append(len(bO))
+                    sizesVer.append(len(bV))
+            if bO != None or bV != None:
+                notEqual = notEqual + 1
+                net.append(file)
+                if bO != None:
+                    sizesOur.append(len(bO))
+                else:
+                    sizesOur.append(-1)
+                if bV != None:
+                    sizesVer.append(len(bV))
+                else:
+                    sizesVer.append(-1)
+
+
+
+
+            data = add_data_to_dict(data, ir, f, True, bOLen, tO, bO != None, bVLen, tV, bV != None)
+
+        print(f"Number of networks that are not equalt: {notEqual}")
+        for i in range(len(sizesOur)):
+            print(f"network: {net[i]}, our size {sizesOur[i]}, verify size {sizesVer[i]}")
+        print("Our fail:", ourFail)
+        print("Verify fail:", verFail)
+        notOur = []
+        notVer = []
+        for i in ourFail:
+            if i not in verFail:
+                notOur.append(i)
+        for i in verFail:
+            if i not in ourFail:
+                notVer.append(i)
+        print(f"Difference: Ours {notOur}, Verify {notVer}")
+
 
         printCSV(data)

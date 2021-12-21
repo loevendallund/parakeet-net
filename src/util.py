@@ -5,14 +5,14 @@ import csv
 from src.network.IR import IR
 from typing import Dict, List
 
-def convert_node_path_to_IR(filePath: str):
+def convert_node_path_to_IR(filePath: str) -> IR:
     file = open(filePath, "r")
     data = json.load(file)
     file.close()
 
     return IR.from_string_routes(data.get("r"), data.get("rm"), data.get("waypoints"))
 
-def convert_edge_path_to_IR(filePath: str):
+def convert_edge_path_to_IR(filePath: str) -> IR:
     file = open(filePath, "r")
     data = json.load(file)
     file.close()
